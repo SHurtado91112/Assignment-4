@@ -2,7 +2,6 @@
 /* Dependencies */
 var mongoose = require('mongoose'), 
     Listing = require('../models/listings.server.model.js');
-
 /*
   In this file, you should use Mongoose queries in order to retrieve/add/remove/update listings.
   On an error you should send a 404 status code, as well as the error message. 
@@ -45,23 +44,62 @@ exports.read = function(req, res) {
 
 /* Update a listing */
 exports.update = function(req, res) {
-  var listing = req.listing;
+    var listing = req.listing;
+    
+/* Replace the article's properties with the new properties found in req.body */
+  if(req.body) {
+      listing.code = req.body.code;
+      listing.name = req.body.name;
+      listing.address = req.body.address;
+  }
+    
+/* save the coordinates (located in req.results if there is an address property) */
+  if(req.results) {
+      if(req.body.address)
+      {
+            listing.coordinates = {
+                latitude: req.results.lat, 
+                longitude: req.results.lng
+            };
+      }
+  }
 
-  /* Replace the article's properties with the new properties found in req.body */
-  /* save the coordinates (located in req.results if there is an address property) */
-  /* Save the article */
+  /* Then save the listing */
+  listing.save(function(err) {
+    if(err) {
+      console.log(err);
+      res.status(400).send(err);
+    } else {
+      res.json(listing);
+    }
+  });
 };
 
 /* Delete a listing */
 exports.delete = function(req, res) {
-  var listing = req.listing;
+    var listing = req.listing;
 
-  /* Remove the article */
+    /* Remove the article */
+    listing.remove(function(error) {
+        if (error){
+          console.log(err);
+          res.status(400).send(err);
+        } else {
+          res.json(listing);
+        }
+    });
 };
 
-/* Retreive all the directory listings, sorted alphabetically by listing code */
+/* Retreive all the director dy listings, sorted alphabetically by listing code */
 exports.list = function(req, res) {
-  /* Your code here */
+    Listing.find({}).sort({code: 1}).exec(function(err, listings) {
+        if(err) {
+            res.status(400).send(err);
+        }
+        else {
+            res.json(listings);    
+        }
+    });
 };
 
 /* 
